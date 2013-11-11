@@ -1,29 +1,49 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
 public class Main {
 	
 	public static void main(String args[]) throws FileNotFoundException {
-		Scanner sc = new Scanner(new File("input.txt"));
-//		Scanner sc = new Scanner(System.in);
+//		Scanner sc = new Scanner(new File("input.txt"));
+		Scanner sc = new Scanner(System.in);
 		int cases = sc.nextInt();
 		
 		Wildcard wildcard = new Main().new Wildcard();
 
 		while (cases-- > 0) {
 			String exp = sc.next();
+			List<String> results = new LinkedList<String>();
 			
+			// find filename which is matched.
 			int numFiles = sc.nextInt();
 			while (numFiles-- > 0) {
 				String target = sc.next();
 				
 				if (wildcard.match(target, exp)) {
-					System.out.println(target);
+					results.add(target);
 				}
+			}
+			
+			
+			Collections.sort(results, new Comparator<String>() {
+				@Override
+				public int compare(String o1, String o2) {
+					return o1.compareTo(o2);
+				}
+			});
+			
+			
+			//print result
+			for (String string : results) {
+				System.out.println(string);
 			}
 		}
 	}
@@ -31,18 +51,11 @@ public class Main {
 	
 	public class Wildcard {
 		private String target;
-		//private String exp;
-		
 		private ResultCache cache;
-		
-		public Wildcard() {
-		}
 		
 		public boolean match(String target, String exp) {
 			this.target = target;
-			//this.exp = exp;
-			
-			cache = new ResultCache(target, exp);
+			cache = new ResultCache();
 			
 			return subMatch(0, exp);
 		}
@@ -56,7 +69,7 @@ public class Main {
 				}
 			}
 			
-			if (offset >= target.length()) {
+			if (offset > target.length()) {
 				return false;
 			}
 			
@@ -64,10 +77,15 @@ public class Main {
 			if (cache.hasCachedResult(offset, remainExp)) {
 				return cache.check(offset, remainExp);
 			}
-
 			
 			
-			char startTargetChar = target.charAt(offset);
+			char startTargetChar;
+			if (offset < target.length()) {
+				startTargetChar = target.charAt(offset);
+			} else {
+				startTargetChar = ' ';
+			}
+			
 			char startExpChar = remainExp.charAt(0);
 			boolean result;
 			if (startExpChar == '*') {
@@ -82,6 +100,7 @@ public class Main {
 				result = false;
 			}
 			
+			// memoization subResult.
 			cache.addResult(result, offset, remainExp);
 			
 			return result;
@@ -89,16 +108,10 @@ public class Main {
 	}
 	
 	public class ResultCache {
-		private String target;
-		private String exp;
-		
 		private HashMap<Integer, Set<String>> totalResult;
 		private HashMap<Integer, Set<String>> trueResult; 
 		
-		public ResultCache(String target, String exp) {
-			this.target = target;
-			this.exp = exp;
-			
+		public ResultCache() {
 			totalResult = new HashMap<Integer, Set<String>>();
 			trueResult = new HashMap<Integer, Set<String>>();
 		}
