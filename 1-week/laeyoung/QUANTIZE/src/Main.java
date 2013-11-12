@@ -65,8 +65,8 @@ public class Main {
 			// 남은 양자화 숫자를 fisrt half와 second half쪽에 줄 수 있는 모든 가능성의 수를 계산함.
 			// first와 second 둘 다 최소 1 이상의 divider를 가져야함. 
 			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1)
-							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1);
+				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1, -1, posDivider)
+							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1, posDivider, -1);
 				
 				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
 				if (sum < localMinimumSum) {
@@ -84,15 +84,26 @@ public class Main {
 		
 		return minimumSum;
 	}
-		
-	public static int divisionMinimumSum(List<Integer> numberList, int numDivider, int startOffset, int endOffset) {
+	
+	/**
+	 * 분할 되었을 때의 최소값을 구하는 method
+	 * 
+	 * @param numberList
+	 * @param numDivider
+	 * @param startOffset
+	 * @param endOffset
+	 * @param beginDivider 제일 앞에 Dividier의 위치 값. 없었으면 -1. 
+	 * @param lastDividier 제일 뒤에 있는 Dividier의 위치 값. 없었으면 -1.
+	 * @return
+	 */
+	public static int divisionMinimumSum(List<Integer> numberList, int numDivider, int startOffset, int endOffset, int beginDivider, int lastDividier) {
 		// 발화식 종료 조건 체크.
 		if (numDivider == 0) {
 			new Exception().printStackTrace();
 		}
 		if (numDivider == 1) {
 			List<Integer> subList = numberList.subList(startOffset, endOffset+1);
-			return getRoundAverage(subList);
+			return getRoundAverage(subList, beginDivider, lastDividier);
 		}
 		
 		
@@ -121,8 +132,8 @@ public class Main {
 			
 			
 			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1)
-							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1);
+				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1, beginDivider, posDivider)
+							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1, posDivider, lastDividier);
 				
 				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
 				if (sum < localMinimumSum) {
@@ -155,7 +166,37 @@ public class Main {
 		}
 	}
 	
-	public static int getRoundAverage(List<Integer> list) {
+	public static int getRoundAverage(List<Integer> list, int beginDivider, int lastDividier) {
+		int minAverage = Integer.MAX_VALUE;
+		int start;
+		int end;
+		
+		if (beginDivider != -1) {
+			start = beginDivider;
+		} else {
+			start = 0;
+		}
+		
+		if (lastDividier != -1) {
+			end = lastDividier;
+		} else {
+			end = 1000;
+		}
+		
+		
+		for (int i = start; i <= end; i++) {
+			if (beginDivider == -1) {
+				
+				
+			} else if (lastDividier == -1) {
+				
+			} else {
+				
+			}
+		}
+		
+
+		
 		int sum = 0;
 		for (Integer integer : list) {
 			sum += integer;
