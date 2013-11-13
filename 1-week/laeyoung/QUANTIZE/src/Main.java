@@ -112,8 +112,8 @@ public class Main {
 		
 		
 		// cache에 기존에 계산한 결과가 있을 경우, 예전 값을 그대로 return.
-		if (cache[startOffset][endOffset][numDivider] != -1) {
-			return cache[startOffset][endOffset][numDivider];
+		if (cache[beginDivider][lastDividier][numDivider] != -1) {
+			return cache[beginDivider][lastDividier][numDivider];
 		}
 		
 
@@ -154,7 +154,7 @@ public class Main {
 		
 
 		// cache에 결과 저장.
-		cache[startOffset][endOffset][numDivider] = minimumSum;
+		cache[beginDivider][lastDividier][numDivider] = minimumSum;
 
 		
 		return minimumSum;
