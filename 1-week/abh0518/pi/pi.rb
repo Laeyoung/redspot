@@ -1,6 +1,5 @@
 #!/usr/bin/bash ruby
 
-
 class MemorizePi
 
   attr_accessor :level, :numbers
@@ -33,8 +32,8 @@ class MemorizePi
   # 하나의 숫자가 반복되는 경우 찾기
   def repeat? numbers
     base = numbers[0]
-    numbers.each_char do |c|
-      if c != base then
+    numbers.each do |value|
+      if value != base then
         return false
       end
     end
@@ -43,11 +42,11 @@ class MemorizePi
 
   # 1씩 단조 증가/감소 경우 찾기
   def monotone? numbers
-    n = numbers[1].to_i - numbers[0].to_i
+    n = numbers[1] - numbers[0]
     return false if n != 1 && n != -1
-    n_before = numbers[0].to_i - n
-    numbers.each_char do |c|
-      number = c.to_i
+    n_before = numbers[0] - n
+    numbers.each do |value|
+      number = value
       if number != n_before + n then
         return false
       end
@@ -61,11 +60,11 @@ class MemorizePi
     n_first = numbers[0]
     n_second = numbers[1]
     index = 0
-    numbers.each_char do |c|
+    numbers.each do |value|
       r_section = index%2
-      if r_section == 0 && c != n_first
+      if r_section == 0 && value != n_first
         return false
-      elsif r_section == 1 && c != n_second then
+      elsif r_section == 1 && value != n_second then
         return false
       end
       index += 1
@@ -75,11 +74,11 @@ class MemorizePi
 
   # 등차수열인 경우 찾기
   def progression? numbers
-    n = numbers[1].to_i - numbers[0].to_i
+    n = numbers[1] - numbers[0]
     return false if n == 0
-    n_before = numbers[0].to_i - n
-    numbers.each_char do |c|
-      number = c.to_i
+    n_before = numbers[0] - n
+    numbers.each do |value|
+      number = value
       if number != n_before + n then
         return false
       end
@@ -92,8 +91,16 @@ end
 
 
 if __FILE__ == $0 then
-
+   numbers = [1,2,1,2,1,2,1]
+   pi = MemorizePi.new numbers
+   puts pi.repeat? numbers
+   puts pi.monotone? numbers
+   puts pi.rotation? numbers
+   puts pi.progression? numbers
 
 
 end
+
+
+
 
