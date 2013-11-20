@@ -1,16 +1,22 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
 
+
 public class Main {
-	private static final int MAX_LIST = 100;
+	private static final int MAX_NUM = 1003;
 	private static final int MAX_QUANTIZE = 10;
-	private static int[][][] cache = new int[MAX_LIST][MAX_LIST][MAX_QUANTIZE];
+	private static final int NO_BEGIN_DIVIER = 1001;
+	private static final int NO_LAST_DIVIER = 1002;
+	
+	private static List<Integer> numberList; 
+	private static int[][][] cache = new int[MAX_NUM][MAX_NUM][MAX_QUANTIZE];
+	
+	
 
 	public static void main(String args[]) throws FileNotFoundException {
 		Scanner sc = new Scanner(new File("input.txt"));
@@ -22,7 +28,7 @@ public class Main {
 			int length = sc.nextInt();
 			int numDivider = sc.nextInt();
 			
-			List<Integer> numberList = new ArrayList<Integer>();
+			numberList = new ArrayList<Integer>();
 			for (int i = 0; i < length; i++) {
 				numberList.add(sc.nextInt());
 			}
@@ -32,14 +38,14 @@ public class Main {
 			
 			
 			// magic(-stick) function
-			int minimumSum = calculateMinimumSum(numberList, numDivider);
+			int minimumSum = calculateMinimumSum(numDivider);
 			
 			// calculate sum of difference^2
 			System.out.println(minimumSum);
 		}
 	}
 	
-	public static int calculateMinimumSum(List<Integer> numberList, int numDivider) {
+	public static int calculateMinimumSum(int numDivider) {
 		int minimumSum = Integer.MAX_VALUE;
 		int minNum = numberList.get(0);
 		int maxNum = numberList.get(numberList.size() - 1);
@@ -65,12 +71,13 @@ public class Main {
 			// 남은 양자화 숫자를 fisrt half와 second half쪽에 줄 수 있는 모든 가능성의 수를 계산함.
 			// first와 second 둘 다 최소 1 이상의 divider를 가져야함. 
 			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1, -1, posDivider)
-							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1, posDivider, -1);
+				int sum = divisionMinimumSum(i, 0, secondHalfStart-1, NO_BEGIN_DIVIER, posDivider)
+							+ divisionMinimumSum(numDivider - i, secondHalfStart, numberList.size()-1, posDivider, NO_LAST_DIVIER);
 				
 				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
-				if (sum < localMinimumSum) {
+				if (sum < localMinimumSum && sum >= 0) {
 					localMinimumSum = sum;
+					System.out.println("localMinimumSum: " + localMinimumSum);
 				}
 			}
 			
@@ -78,6 +85,7 @@ public class Main {
 			// 새로 localMinimumSum이 minimumSum보다 작으면 업데이트.
 			if (localMinimumSum < minimumSum) {
 				minimumSum = localMinimumSum;
+				System.out.println("minimumSum: " + minimumSum);
 			}
 		}
 		
@@ -92,11 +100,11 @@ public class Main {
 	 * @param numDivider
 	 * @param startOffset
 	 * @param endOffset
-	 * @param beginDivider 제일 앞에 Dividier의 위치 값. 없었으면 -1. 
-	 * @param lastDividier 제일 뒤에 있는 Dividier의 위치 값. 없었으면 -1.
+	 * @param beginDivider 제일 앞에 Dividier의 위치 값. 없었으면 NO_BEGIN_DIVIDER. 
+	 * @param lastDividier 제일 뒤에 있는 Dividier의 위치 값. 없었으면 NO_LAST_DIVIDER.
 	 * @return
 	 */
-	public static int divisionMinimumSum(List<Integer> numberList, int numDivider, int startOffset, int endOffset, int beginDivider, int lastDividier) {
+	public static int divisionMinimumSum(int numDivider, int startOffset, int endOffset, int beginDivider, int lastDividier) {
 		// 발화식 종료 조건 체크.
 		if (numDivider == 0) {
 			new Exception().printStackTrace();
@@ -108,8 +116,8 @@ public class Main {
 		
 		
 		// cache에 기존에 계산한 결과가 있을 경우, 예전 값을 그대로 return.
-		if (cache[startOffset][endOffset][numDivider] != -1) {
-			return cache[startOffset][endOffset][numDivider];
+		if (cache[beginDivider][lastDividier][numDivider] != -1) {
+			return cache[beginDivider][lastDividier][numDivider];
 		}
 		
 
@@ -132,8 +140,8 @@ public class Main {
 			
 			
 			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(numberList, i, 0, secondHalfStart-1, beginDivider, posDivider)
-							+ divisionMinimumSum(numberList, numDivider - i, secondHalfStart, numberList.size()-1, posDivider, lastDividier);
+				int sum = divisionMinimumSum(i, 0, secondHalfStart-1, beginDivider, posDivider)
+							+ divisionMinimumSum(numDivider - i, secondHalfStart, numberList.size()-1, posDivider, lastDividier);
 				
 				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
 				if (sum < localMinimumSum) {
@@ -150,15 +158,15 @@ public class Main {
 		
 
 		// cache에 결과 저장.
-		cache[startOffset][endOffset][numDivider] = minimumSum;
+		cache[beginDivider][lastDividier][numDivider] = minimumSum;
 
 		
 		return minimumSum;
 	}
 	
 	public static void initCache(int[][][] cache) {
-		for (int i = 0; i < MAX_LIST; i++) {
-			for (int j = 0; j < MAX_LIST; j++) {
+		for (int i = 0; i < MAX_NUM; i++) {
+			for (int j = 0; j < MAX_NUM; j++) {
 				for (int k = 0; k < MAX_QUANTIZE; k++) {
 					cache[i][j][k] = -1;
 				}
@@ -167,41 +175,53 @@ public class Main {
 	}
 	
 	public static int getRoundAverage(List<Integer> list, int beginDivider, int lastDividier) {
-		int minAverage = Integer.MAX_VALUE;
+		int resultPosition = 0;
+		int minSum = Integer.MAX_VALUE;
 		int start;
 		int end;
 		
-		if (beginDivider != -1) {
-			start = beginDivider;
-		} else {
+		if (beginDivider == NO_BEGIN_DIVIER) {
 			start = 0;
+			beginDivider = Integer.MAX_VALUE;
+		} else {
+			start = beginDivider;
 		}
 		
-		if (lastDividier != -1) {
-			end = lastDividier;
-		} else {
+		if (lastDividier == NO_LAST_DIVIER) {
 			end = 1000;
+			lastDividier = Integer.MAX_VALUE;
+		} else {
+			end = lastDividier;
 		}
 		
 		
 		for (int i = start; i <= end; i++) {
-			if (beginDivider == -1) {
-				
-				
-			} else if (lastDividier == -1) {
-				
-			} else {
-				
+			int sum = 0;
+			for (Integer integer : list) {
+				sum += getMin(integer, start, i, end);
+			}
+			
+			
+			if (sum < minSum) {
+				minSum = sum;
+				resultPosition = i;
 			}
 		}
 		
-
+		return minSum;
+	}
+	
+	public static int getMin(int integer, int start, int i, int end) {
+		int a = Math.abs(start - integer);
+		int b = Math.abs(i - integer);
+		int c = Math.abs(end - integer);
 		
-		int sum = 0;
-		for (Integer integer : list) {
-			sum += integer;
+		if (a <= b && a <= c) {
+			return a;
+		} else if (b <= a && b <= c) {
+			return b;
+		} else {
+			return c;
 		}
-		
-		return Math.round( ((float)sum) / list.size() );
 	}
 }
