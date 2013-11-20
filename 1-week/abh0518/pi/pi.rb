@@ -1,19 +1,40 @@
 #!/usr/bin/bash ruby
 
+
 class MemorizePi
 
-  attr_accessor :level, :numbers
+  attr_accessor :level, :numbers, :cache
 
   def initialize numbers
     @numbers = numbers
-    @level = 0
-    @index = 0
+    @cache = {}
   end
 
-  def get_char count
-
+  def start
+    find(0,numbers.length-1)
   end
 
+  def find inx, inj
+
+    key = "#{inx},#{inj}"
+    return @cache[key] if !@cache[key].nil?
+
+    remains = inj - inx + 1
+    score3, score4, score5 = 10,10,10
+    if remains > 2
+      score3 = score?(numbers[inx..inx+2]) + find(inx+3, inj) if remains > 2
+      score4 = score?(numbers[inx..inx+3]) + find(inx+4, inj) if remains > 3
+      score5 = score?(numbers[inx..inx+4]) + find(inx+5, inj) if remains > 4
+    else
+      if remains < 1
+        return 0
+      else
+        return 10
+      end
+    end
+    result = [score3, score4, score5].min
+    @cache[key] = result
+  end
 
   def score? numbers
     if self.repeat? numbers
@@ -89,18 +110,43 @@ class MemorizePi
 
 end
 
-
 if __FILE__ == $0 then
-   numbers = [1,2,1,2,1,2,1]
-   pi = MemorizePi.new numbers
-   puts pi.repeat? numbers
-   puts pi.monotone? numbers
-   puts pi.rotation? numbers
-   puts pi.progression? numbers
 
+  #예제 입력
+  #5
+  p1 = MemorizePi.new [1,2,3,4,1,2,3,4]
+  p2 = MemorizePi.new [1,1,1,1,1,2,2,2]
+  p3 = MemorizePi.new [1,2,1,2,2,2,2,2]
+  p4 = MemorizePi.new [2,2,2,2,2,2,2,2]
+  p5 = MemorizePi.new [1,2,6,7,3,9,3,9]
+
+#예제 출력
+#  4
+#  2
+#  5
+#  2
+#  14
+
+  #puts p1.start
+  #puts p2.start
+  #puts p3.start
+  #puts p4.start
+  #puts p5.start
+
+
+  numbers = []
+  10000.times() do
+    numbers << Random.rand(9)+1
+  end
+
+
+  pi = MemorizePi.new numbers
+
+  start_time = Time.new
+  puts pi.start
+  end_time = Time.new
+  puts end_time - start_time
 
 end
-
-
 
 
