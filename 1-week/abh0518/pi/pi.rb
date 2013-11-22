@@ -1,60 +1,53 @@
 #!/usr/bin/bash ruby
 
-
 class MemorizePi
 
-  attr_accessor :level, :numbers, :cache
+  attr_accessor :numbers, :cache, :size
 
   def initialize numbers
     @numbers = numbers
-    @cache = {}
+    @cache = []
   end
 
   def start
-    find(0,numbers.length-1)
+    find(0)
   end
 
-  def find inx, inj
+  def find startpoint
+    return 0 if !(startpoint < @numbers.size)
+    return @cache[startpoint] if !@cache[startpoint].nil?
 
-    key = "#{inx},#{inj}"
-    return @cache[key] if !@cache[key].nil?
-
-    remains = inj - inx + 1
-    score3, score4, score5 = 10,10,10
-    if remains > 2
-      score3 = score?(numbers[inx..inx+2]) + find(inx+3, inj) if remains > 2
-      score4 = score?(numbers[inx..inx+3]) + find(inx+4, inj) if remains > 3
-      score5 = score?(numbers[inx..inx+4]) + find(inx+5, inj) if remains > 4
-    else
-      if remains < 1
-        return 0
-      else
-        return 10
+    result = 987654321
+    (2..4).each do |index|
+      endpoint = startpoint + index
+      if endpoint < @numbers.size
+        score = score?(startpoint, endpoint) + find(endpoint+1)
+        result = [ score , result].min
       end
     end
-    result = [score3, score4, score5].min
-    @cache[key] = result
+
+    @cache[startpoint] = result
+    return result
   end
 
-  def score? numbers
-    if self.repeat? numbers
+  def score? startpoint, endpoint
+    if self.repeat? startpoint, endpoint
       return 1
-    elsif self.monotone? numbers
+    elsif self.monotone? startpoint, endpoint
       return 2
-    elsif self.rotation? numbers
+    elsif self.rotation? startpoint, endpoint
       return 4
-    elsif self.progression? numbers
+    elsif self.progression? startpoint, endpoint
       return 5
-    else
-      return 10
     end
+    return 10
   end
 
   # 하나의 숫자가 반복되는 경우 찾기
-  def repeat? numbers
-    base = numbers[0]
-    numbers.each do |value|
-      if value != base then
+  def repeat? startpoint, endpoint
+    base = @numbers[startpoint]
+    (startpoint..endpoint).each do |index|
+      if @numbers[index] != base then
         return false
       end
     end
@@ -62,91 +55,69 @@ class MemorizePi
   end
 
   # 1씩 단조 증가/감소 경우 찾기
-  def monotone? numbers
-    n = numbers[1] - numbers[0]
+  def monotone? startpoint, endpoint
+    n = @numbers[startpoint+1] - @numbers[startpoint]
     return false if n != 1 && n != -1
-    n_before = numbers[0] - n
-    numbers.each do |value|
-      number = value
-      if number != n_before + n then
+    n_before = @numbers[startpoint] - n
+    (startpoint..endpoint).each do |index|
+      if @numbers[index] != n_before + n then
         return false
       end
-      n_before = number
+      n_before = @numbers[index]
+
     end
     return true
   end
 
   # 2개의 숫자가 번갈아가며 나타나는 경우 찾기
-  def rotation? numbers
-    n_first = numbers[0]
-    n_second = numbers[1]
+  def rotation? startpoint, endpoint
+    n_first = @numbers[startpoint]
+    n_second = @numbers[startpoint+1]
     index = 0
-    numbers.each do |value|
+    (startpoint..endpoint).each do |index|
       r_section = index%2
-      if r_section == 0 && value != n_first
+      if r_section == 0 && @numbers[index] != n_first
         return false
-      elsif r_section == 1 && value != n_second then
+      elsif r_section == 1 && @numbers[index] != n_second then
         return false
       end
-      index += 1
     end
     return true
   end
 
   # 등차수열인 경우 찾기
-  def progression? numbers
-    n = numbers[1] - numbers[0]
+  def progression? startpoint, endpoint
+    n = @numbers[startpoint+1] - @numbers[startpoint]
     return false if n == 0
-    n_before = numbers[0] - n
-    numbers.each do |value|
-      number = value
-      if number != n_before + n then
+    n_before = @numbers[startpoint] - n
+    (startpoint..endpoint).each do |index|
+      if @numbers[index] != n_before + n then
         return false
       end
-      n_before = number
+      n_before = @numbers[index]
     end
     return true
   end
 
 end
 
+
 if __FILE__ == $0 then
 
-  #예제 입력
-  #5
-  p1 = MemorizePi.new [1,2,3,4,1,2,3,4]
-  p2 = MemorizePi.new [1,1,1,1,1,2,2,2]
-  p3 = MemorizePi.new [1,2,1,2,2,2,2,2]
-  p4 = MemorizePi.new [2,2,2,2,2,2,2,2]
-  p5 = MemorizePi.new [1,2,6,7,3,9,3,9]
+  results = []
+  c = gets
+  c.to_i.times do
+    str = gets
+    data = []
+    str.chars do |v|
+      data << v.to_i
+    end
 
-#예제 출력
-#  4
-#  2
-#  5
-#  2
-#  14
+    results << (MemorizePi.new data).start
 
-  #puts p1.start
-  #puts p2.start
-  #puts p3.start
-  #puts p4.start
-  #puts p5.start
-
-
-  numbers = []
-  10000.times() do
-    numbers << Random.rand(9)+1
   end
 
-
-  pi = MemorizePi.new numbers
-
-  start_time = Time.new
-  puts pi.start
-  end_time = Time.new
-  puts end_time - start_time
+  puts results
 
 end
-
 
