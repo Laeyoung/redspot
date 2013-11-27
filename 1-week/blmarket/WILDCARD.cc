@@ -35,10 +35,11 @@ bool valid(const string &str) {
     memset(vv, -1, sizeof(vv));
     vv[0][0] = 1;
     function<bool(int, int)> ff = [&](int a, int b) -> bool {
+        if(a<0 || b<0) return false;
         if(vv[a][b] != -1) return vv[a][b];
         switch(pat[b]) {
             case '*':
-                return vv[a][b] = ff(a-1, b) || ff(a-1, b-1);
+                return vv[a][b] = ff(a-1, b) || ff(a, b-1);
             case '?':
                 return vv[a][b] = ff(a-1, b-1);
             default:
