@@ -2,9 +2,8 @@
  * 두니발 박사 탈옥 알고스팟 통과
  * 1. 간당간단하게 통과함
  * 2. 메모이제이션을 쓰는데 다른 해결책과 날리 getProba 메소드를 실행할때마다 메모이제이션 배열을 초기화 해줘여 답이 제대로 나옴
- * 3. 메모이제이션 저장 부분 로직을 뭔가 잘못짠건가?
- * 4. 일단 매번 메모이제이션 부분을 초기화 하면 시간내에 품
- * 5. 캐시 배열을 객체 배열로 쓴것도 시간을 잡아먹는 문제중 하나였음, 프리미티브 배열을 써야함
+ * 3. 메모이제이션 저장 부분 로직을 뭔가 잘못짠건가? -> 메모이제이션을 잘못하고 있었음, 수정완료, 알고스판 테스트 1초대로 단축 
+ * 
  */
 
 import java.io.IOException;
@@ -14,16 +13,15 @@ import java.util.Scanner;
 public class Main {
 	
 	private int town[][];
-	private int prison;
-	private int days;
-	
 	int[] degree;
-	private double cache[][];
 	
-	public Main(int town[][], int prison, int days){
+	private int prison;
+	
+	private Double cache[][];
+	
+	public Main(int town[][], int prison){ 
 		this.town = town;
 		this.prison = prison;
-		this.days = days;
 		
 		this.degree = new int[town.length];
 		for(int i = 0 ; i < town.length ; i++){
@@ -34,42 +32,30 @@ public class Main {
 			degree[i] = count;
 		}
 		
-		
+		cache = new Double[50][100];
 	}
 	
-	public double getProbability(int end){
-		cache = new double[50][100];
-		for(int i = 0 ; i < cache.length ; i++){
-			for(int j = 0 ; j < cache[i].length ; j++){
-				cache[i][j] = -1;
-			}
-		}
+	private double getProbability(int visit, int days){
 		
-		return getProbability(prison, end , 0);
-	}
-	
-	private double getProbability(int start, int end, int curDay){
-		
-		if(this.days == curDay){
-			if(start != end) return 0;
+		if(days == 0){
+			if(visit != this.prison) return 0;
 			return 1;
 		}
 		
-		if(cache[start][curDay] != -1) return cache[start][curDay];
+		if(cache[visit][days] != null) return cache[visit][days];
 		
-		double probablility = 0;
-		for(int i = 0 ; i <  town[start].length ; i++){
-			if(town[start][i]==1) {
-				probablility = probablility + getProbability(i ,end, curDay+1)/degree[start];
+		double probablility = 0L;
+		for(int i = 0 ; i <  town[visit].length ; i++){
+			if(town[visit][i]==1) {
+				probablility = probablility + getProbability(i , days-1)/degree[i];
 			}
 		}
 		
-		cache[start][curDay] = probablility;
+		cache[visit][days] = probablility;
 		return probablility;
 	}
 	
 	public static void main(String args[]) throws NumberFormatException, IOException{
-		//Date startTime = new Date();
 		
 		Scanner in = new Scanner(System.in);
 		//Scanner in = new Scanner(new FileInputStream("test.txt"));
@@ -88,8 +74,6 @@ public class Main {
 				}
 			}
 			
-			Main numb = new Main(town, start, days);
-			
 			int endCount = in.nextInt();
 			
 			int[] end = new int[endCount];
@@ -97,19 +81,18 @@ public class Main {
 				end[j] = in.nextInt();
 			}	
 			
+			Main numb = new Main(town,start);
 			
 			for(int j = 0 ; j < endCount ; j++){
 				if(j+1 != endCount){
-					System.out.print(Double.parseDouble(String.format("%.8f",  numb.getProbability(end[j])))+" ");
+					System.out.print(Double.parseDouble(String.format("%.8f",  numb.getProbability(end[j],days)))+" ");
 				}
 				else{
-					System.out.println(Double.parseDouble(String.format("%.8f",  numb.getProbability(end[j]))));				
+					System.out.println(Double.parseDouble(String.format("%.8f",  numb.getProbability(end[j],days))));				
 				}
 			}
 		}
-		
-		//Date endTime = new Date();
-		//System.out.println(endTime.getTime() - startTime.getTime());
+	
 	
 	}
 	
