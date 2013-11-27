@@ -50,7 +50,7 @@ void process(void) {
         memo[a] = min(memo[a], go(a-5) + diffi(str+a-5, 5));
         return memo[a];
     };
-    cout << go(n-1) << endl;
+    cout << go(n) << endl;
 }
 
 int main(void) {
