@@ -37,17 +37,24 @@ bool valid(const string &str) {
     function<bool(int, int)> ff = [&](int a, int b) -> bool {
         if(a<0 || b<0) return false;
         if(vv[a][b] != -1) return vv[a][b];
-        switch(pat[b]) {
+        switch(pat[b-1]) {
             case '*':
+                if(b == 1) return vv[a][b] = 1;
                 return vv[a][b] = ff(a-1, b) || ff(a, b-1);
             case '?':
                 return vv[a][b] = ff(a-1, b-1);
             default:
-                return vv[a][b] = ff(a-1, b-1) && str[a] == pat[b];
+                return vv[a][b] = ff(a-1, b-1) && str[a-1] == pat[b-1];
         }
     };
 
-    return ff(size(str)-1, size(pat)-1);
+    bool ret = ff(size(str), size(pat));
+    // cout << str << endl;
+    // for(int i=0;i<=size(str);i++) {
+    //     for(int j=0;j<=size(pat);j++) cout << vv[i][j] << " ";
+    //     cout << endl;
+    // }
+    return ret;
 }
 
 void process() {
