@@ -10,13 +10,15 @@ import java.util.Scanner;
 public class Main {
 	private static final int MAX_LENGTH = 200 * 1000;
 	private static final int MAX_INT_LENGTH = 6250;
+	private static final int INTEGER_BIT_LENGTH = 32; 
 	
 	// 1bit에 1사람에 대한 성별 정보를 담음(따라서 사이즈는 200,000/32해서 6250). 남자는 1, 여자는 0.
 	private static int[] memberArray = new int[MAX_INT_LENGTH];
 	private static int[] fanArray = new int[MAX_INT_LENGTH];
+	private static int[][] fanArrayTemp = new int[INTEGER_BIT_LENGTH][MAX_INT_LENGTH]; // bit shift 시켜놓은 값을 저장해놓음.
 	
-	private static int MALE_BIT = 0x0;
-	private static int FEMALE_BIT = 0x1;
+	private static int MALE_BIT = 0x1;
+	private static int FEMALE_BIT = 0x0;
 	
 
 	public static void main(String args[]) throws FileNotFoundException {
@@ -26,231 +28,105 @@ public class Main {
 		
 		while (cases-- > 0) {
 			// input.txt에서 필요한 parameter 값 읽기.
-			String memberStr = sc.nextLine();
-			String fanStr = sc.nextLine();
+			String memberStr = sc.next();
+			String fanStr = sc.next();
 			
+			int intMemberLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
+			int intFanLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
 			
+			System.out.println(intMemberLength);
+			System.out.println(intFanLength);
 			
-			numberList = new ArrayList<Integer>();
-			for (int i = 0; i < length; i++) {
-				numberList.add(sc.nextInt());
-			}
+			// 변수를 0으로 초기화. 
+			initIntBit(memberArray);
+			initIntBit(fanArray);
 			
+			// Male, Female 변수를 integer에 bit 값으로 저장함.
+			convertStringToIntBit(memberStr, memberArray);
+			convertStringToIntBit(fanStr, fanArray);
 			
-			Collections.sort(numberList);
+			bitShiftedArray(fanArray, fanArrayTemp);
 			
-			
-			// magic(-stick) function
-			int minimumSum = calculateMinimumSum(numDivider);
-			
-			// calculate sum of difference^2
-			System.out.println(minimumSum);
+			// 결과 계산.
+			calculateResult(memberArray, fanArrayTemp, memberStr.length(), fanStr.length(), intFanLength);
 		}
 		
 		sc.close();
 	}
 	
-	public static int calculateMinimumSum(int numDivider) {
-		int minimumSum = Integer.MAX_VALUE;
-		int minNum = numberList.get(0);
-		int maxNum = numberList.get(numberList.size() - 1);
+	public static void calculateResult(int[] member, int[][] fan, int numMember, int numFan, int intFanLength) {
+		int shiftCounter = 0;
+		int indexPointer = 0; 
 		
-		initCache(cache);
+		int resultCounter = 0;
+		boolean isCorrectMatching = true;
 		
-
-		// 최소값과 최대값 사이의 숫자들을 최초의 양자화 숫자로 정하고 이 중에 최소값을 찾아냄.
-		for (int posDivider = minNum; posDivider <= maxNum; posDivider++) {
-			int localMinimumSum = Integer.MAX_VALUE;
-			
-			// 해당 양자화 숫자가 정해졌을 때, 배열이 나눠지는 지점을 찾아냄.
-			// 무조건 나눠져야 하므로, 2번째 구역이 시작되는 위치는 1부터 시작됨.
-			int secondHalfStart = 1;
-			for (int i = 1; i < numberList.size(); i++) {
-				if (numberList.get(i) > posDivider) {
-					secondHalfStart = i;
+		for (int i=0; numFan-i<= numMember; i++) { // 남은 fan의 수가 member보다 작으면 종료.
+			for (int j = 0; j < intFanLength; j++) {
+				// memeber와 fan 사이에 남남이 만나는 경우가 있으면, bit 연산자 값이 0이 아닌 값이 됨.
+				if ( (member[j] & fan[shiftCounter][j+indexPointer]) != 0) { 
+					isCorrectMatching = false;
 					break;
 				}
 			}
 			
+			if (isCorrectMatching) {
+				resultCounter++;
+			}
 			
-			// 남은 양자화 숫자를 fisrt half와 second half쪽에 줄 수 있는 모든 가능성의 수를 계산함.
-			// first와 second 둘 다 최소 1 이상의 divider를 가져야함. 
-			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(i, 0, secondHalfStart-1, NO_BEGIN_DIVIER, posDivider)
-							+ divisionMinimumSum(numDivider - i, secondHalfStart, numberList.size()-1, posDivider, NO_LAST_DIVIER);
+			shiftCounter++;
+			if (shiftCounter == INTEGER_BIT_LENGTH) {
+				shiftCounter = 0;
+				indexPointer++;
+			}
+		}
+		
+		System.out.println(resultCounter);
+	}
+	
+	
+	public static void initIntBit(int[] target) {
+		for (int i=0; i<target.length; i++) {
+			target[i] = 0;
+		}
+	}
+	
+	
+	// Shift 된 값을 가지고 있는 target array를 만든다.
+	public static void bitShiftedArray(int[] origin, int[][] target) {
+		for (int j=0; j< MAX_INT_LENGTH; j++) {
+			target[0][j] = origin[j];
+		}
+		
+		
+		for (int i=1; i< INTEGER_BIT_LENGTH; i++) {
+			for (int j=0; j< MAX_INT_LENGTH; j++) {
+				target[i][j] = target[i-1][j] << 1;
 				
-				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
-				if (sum < localMinimumSum && sum >= 0) {
-					localMinimumSum = sum;
-					System.out.println("localMinimumSum: " + localMinimumSum);
+				if( (target[i-1][j] & MALE_BIT) == 1) {
+					target[i][j] |= MALE_BIT;
 				}
 			}
-			
-			
-			// 새로 localMinimumSum이 minimumSum보다 작으면 업데이트.
-			if (localMinimumSum < minimumSum) {
-				minimumSum = localMinimumSum;
-				System.out.println("minimumSum: " + minimumSum);
-			}
-		}
-		
-		
-		return minimumSum;
-	}
-	
-	/**
-	 * 분할 되었을 때의 최소값을 구하는 method
-	 * 
-	 * @param numberList
-	 * @param numDivider
-	 * @param startOffset
-	 * @param endOffset
-	 * @param beginDivider 제일 앞에 Dividier의 위치 값. 없었으면 NO_BEGIN_DIVIDER. 
-	 * @param lastDividier 제일 뒤에 있는 Dividier의 위치 값. 없었으면 NO_LAST_DIVIDER.
-	 * @return
-	 */
-	public static int divisionMinimumSum(int numDivider, int startOffset, int endOffset, int beginDivider, int lastDividier) {
-		// 발화식 종료 조건 체크.
-		if (numDivider == 0) {
-			new Exception().printStackTrace();
-		}
-		if (numDivider == 1) {
-			List<Integer> subList = numberList.subList(startOffset, endOffset+1);
-			return getRoundAverage(subList, beginDivider, lastDividier);
-		}
-		
-		
-		// cache에 기존에 계산한 결과가 있을 경우, 예전 값을 그대로 return.
-		if (cache[beginDivider][lastDividier][numDivider] != -1) {
-			return cache[beginDivider][lastDividier][numDivider];
-		}
-		
-
-		
-		// 기존의 발화식대로, minimumSum을 계산. (calculateMinimumSum와 유사).
-		int minimumSum = Integer.MAX_VALUE;
-		int minNum = numberList.get(startOffset);
-		int maxNum = numberList.get(endOffset);
-		
-		for (int posDivider = minNum; posDivider <= maxNum; posDivider++) {
-			int localMinimumSum = Integer.MAX_VALUE;
-			
-			int secondHalfStart = 1;
-			for (int i = 1; i < numberList.size(); i++) {
-				if (numberList.get(i) > posDivider) {
-					secondHalfStart = i;
-					break;
-				}
-			}
-			
-			
-			for (int i = 1; i < numDivider; i++) {
-				int sum = divisionMinimumSum(i, 0, secondHalfStart-1, beginDivider, posDivider)
-							+ divisionMinimumSum(numDivider - i, secondHalfStart, numberList.size()-1, posDivider, lastDividier);
-				
-				// 새로 구한 값이 localMinimumSum 보다 작으면 값을 update.
-				if (sum < localMinimumSum) {
-					localMinimumSum = sum;
-				}
-			}
-			
-			
-			// 새로 localMinimumSum이 minimumSum보다 작으면 업데이트.
-			if (localMinimumSum < minimumSum) {
-				minimumSum = localMinimumSum;
-			}
-		}
-		
-
-		// cache에 결과 저장.
-		cache[beginDivider][lastDividier][numDivider] = minimumSum;
-
-		
-		return minimumSum;
-	}
-	
-	public static void initCache(int[][][] cache) {
-		for (int i = 0; i < MAX_NUM; i++) {
-			for (int j = 0; j < MAX_NUM; j++) {
-				for (int k = 0; k < MAX_QUANTIZE; k++) {
-					cache[i][j][k] = -1;
-				}
-			}
-		}
-	}
-	
-	public static int getRoundAverage(List<Integer> list, int beginDivider, int lastDividier) {
-		int resultPosition = 0;
-		int minSum = Integer.MAX_VALUE;
-		int start;
-		int end;
-		
-		if (beginDivider == NO_BEGIN_DIVIER) {
-			start = 0;
-			beginDivider = Integer.MAX_VALUE;
-		} else {
-			start = beginDivider;
-		}
-		
-		if (lastDividier == NO_LAST_DIVIER) {
-			end = 1000;
-			lastDividier = Integer.MAX_VALUE;
-		} else {
-			end = lastDividier;
-		}
-		
-		
-		for (int i = start; i <= end; i++) {
-			int sum = 0;
-			for (Integer integer : list) {
-				sum += getMin(integer, start, i, end);
-			}
-			
-			
-			if (sum < minSum) {
-				minSum = sum;
-				resultPosition = i;
-			}
-		}
-		
-		return minSum;
-	}
-	
-	public static int getMin(int integer, int start, int i, int end) {
-		int a = Math.abs(start - integer);
-		int b = Math.abs(i - integer);
-		int c = Math.abs(end - integer);
-		
-		if (a <= b && a <= c) {
-			return a;
-		} else if (b <= a && b <= c) {
-			return b;
-		} else {
-			return c;
 		}
 	}
 	
 	public static void convertStringToIntBit(String str, int[] target) {
-		int strIndex = str.length();
-		int targetReverseIndex = 1;
+		int arrayCounter = 0;
 		int intBitCounter = 0;
 		
-		while (strIndex-- > 0) {
-			if (str.charAt(strIndex) == 'M') {
-				target[MAX_INT_LENGTH - j] |= MALE_BIT;
-				target[MAX_INT_LENGTH - j] = target[MAX_INT_LENGTH - j] << 1;
-			} else {
-				target[MAX_INT_LENGTH - j] |= FEMALE_BIT;
-				target[MAX_INT_LENGTH - j] = target[MAX_INT_LENGTH - j] << 1;
+		for (int i=0; i<str.length(); i++) {
+			target[arrayCounter] = target[arrayCounter] << 1;
+			
+			if (str.charAt(i) == 'M') {
+				target[arrayCounter] |= MALE_BIT;
 			}
 					
-			targetReverseIndex++;
 			intBitCounter++;
 			
 			if (intBitCounter == 32) {
 				intBitCounter = 0;
+				arrayCounter++;
 			}
 		}
-		
 	}
 }
