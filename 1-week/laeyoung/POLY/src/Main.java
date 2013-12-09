@@ -8,19 +8,11 @@ import java.util.Scanner;
 
 
 public class Main {
-	private static final int MAX_LENGTH = 200 * 1000;
-	private static final int MAX_INT_LENGTH = 6250;
-	private static final int INTEGER_BIT_LENGTH = 32; 
+	private static final int MAX_SQUARE = 100;
 	
-	// 1bit에 1사람에 대한 성별 정보를 담음(따라서 사이즈는 200,000/32해서 6250). 남자는 1, 여자는 0.
-	private static int[] memberArray = new int[MAX_INT_LENGTH];
-	private static int[] fanArray = new int[MAX_INT_LENGTH];
-	private static int[][] fanArrayTemp = new int[INTEGER_BIT_LENGTH][MAX_INT_LENGTH]; // bit shift 시켜놓은 값을 저장해놓음.
-	
-	private static int MALE_BIT = 0x1;
-	private static int FEMALE_BIT = 0x0;
-	
-	private static int resultCounter = 0;
+	// 이전 블럭의 수와 현재 블록의 수에 따라서 결과가 정해지므로, 결과를 저장하는 cache는 아래와 같이 정의됨.
+	public static long[][] cache = new long[MAX_SQUARE][MAX_SQUARE];  
+
 	
 	/*
 	 * BitSet
@@ -29,44 +21,70 @@ public class Main {
 	 * Sparse Array
 	 * 
 	 */
-	
 
 	public static void main(String args[]) throws FileNotFoundException {
 		Scanner sc = new Scanner(new File("input.txt"));
 //		Scanner sc = new Scanner(System.in);
 		int cases = sc.nextInt();
 		
+		initCache(cache);
 		while (cases-- > 0) {
 			// input.txt에서 필요한 parameter 값 읽기.
 			int numSquare = sc.nextInt();
 			
-			resultCounter = 0;
-			
-			int intMemberLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
-			int intFanLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
-			
-			System.out.println(intMemberLength);
-			System.out.println(intFanLength);
-			
-			// 변수를 0으로 초기화. 
-			initIntBit(memberArray);
-			initIntBit(fanArray);
-			
-			// Male, Female 변수를 integer에 bit 값으로 저장함.
-			convertStringToIntBit(memberStr, memberArray);
-			convertStringToIntBit(fanStr, fanArray);
-			
-			bitShiftedArray(fanArray, fanArrayTemp);
-			
-			// 결과 계산.
-			calculateResult(memberArray, fanArrayTemp, memberStr.length(), fanStr.length(), intFanLength);
+			System.out.println(findPoly(numSquare, 0));
 		}
 		
 		sc.close();
 	}
 	
-	public static void findPoly(int numPoly, int[] previousBlockPos) {
+	
+	/**
+	 * 1. 이전 줄에 있는 블럭은 무조건 문제의 조건을 통과했기 때문에, 무조건 한줄로 배치 될 수 밖에 없음.
+	 * 2. 이번 줄에 놓일 블럭의 갯수를 알면, 거기서 가능한 경우의 수가 나옴.
+	 *    경우의 수는 (이전 블럭의 갯수 + 놓일 블럭 수 -1)
+	 * 3. 매 처음 시작 일 때는 numPrevBlock이 0 값이 들어온 채로 시작.
+	 *    해당 경우, 경우의 수(casePosibility)는 항상 1임.
+	 */
+	public static long findPoly(int numRemainSquare, int numPrevBlock) {
+		// 예전에 계산되어서 cache에 저장되어 있는 값이 있는지 확인.
+		if (cache[numRemainSquare][numPrevBlock] >= 0) {
+			return cache[numRemainSquare][numPrevBlock];
+		}
 		
+		
+		
+		// 종료 조건 체크.
+		// 남은 블럭이 없으므로, 경우의 수가 하나라 1을 return함.
+		if (numRemainSquare == 0) {
+			return cache[numRemainSquare][numPrevBlock] = 1;
+		}
+		
+		int resultSum = 0;
+		// 무조건 한개의 블럭의 놓아야 하므로 1부터 시작함.
+		for(int i = 1; i <= numRemainSquare; i++) {
+			// i개이 블록의 놓기로 정해져 있을 때, 놓을 수 있는 경우의 수.
+			int casePosibility;
+			if (numPrevBlock > 0) {
+				casePosibility = numPrevBlock + i - 1;
+			} else {
+				casePosibility = 1;
+			}
+			
+			// 현재 경우의 수 * 하위 경우의 수를 하면, 현재 상황에서의 총 경우의 수가 된다.
+			resultSum += casePosibility * findPoly(numRemainSquare-i, i);
+		}
+		
+		
+		return cache[numRemainSquare][numPrevBlock] = resultSum; 
 	}
 	
+	
+	public static void initCache(long[][] cache) {
+		for (int i = 0; i < MAX_SQUARE; i++) {
+			for (int j = 0; j < MAX_SQUARE; j++) {
+				cache[i][j] = -1;
+			}
+		}
+	}
 }
