@@ -17,11 +17,14 @@ public class Main {
 	private static int[] fanArray = new int[MAX_INT_LENGTH];
 	private static int[][] fanArrayTemp = new int[INTEGER_BIT_LENGTH][MAX_INT_LENGTH]; // bit shift 시켜놓은 값을 저장해놓음.
 	
+	private static int[] compareBit = new int[INTEGER_BIT_LENGTH]; //해당 index 값의 bit만 1인 값을 저장해 놓음.
 	private static int MALE_BIT = 0x1;
 	private static int FEMALE_BIT = 0x0;
 	
 
 	public static void main(String args[]) throws FileNotFoundException {
+		makeCompareBit(compareBit);
+		
 		Scanner sc = new Scanner(new File("input.txt"));
 //		Scanner sc = new Scanner(System.in);
 		int cases = sc.nextInt();
@@ -31,11 +34,11 @@ public class Main {
 			String memberStr = sc.next();
 			String fanStr = sc.next();
 			
-			int intMemberLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
-			int intFanLength = (int) Math.floor(memberStr.length() / (double) INTEGER_BIT_LENGTH);
+			int intMemberLength = (int) Math.ceil( ((double) memberStr.length()) / INTEGER_BIT_LENGTH);
+			int intFanLength = (int) Math.ceil( ((double) fanStr.length()) / INTEGER_BIT_LENGTH);
 			
-			System.out.println(intMemberLength);
-			System.out.println(intFanLength);
+			//System.out.println(intMemberLength);
+			//System.out.println(intFanLength);
 			
 			// 변수를 0으로 초기화. 
 			initIntBit(memberArray);
@@ -45,7 +48,15 @@ public class Main {
 			convertStringToIntBit(memberStr, memberArray);
 			convertStringToIntBit(fanStr, fanArray);
 			
+			System.out.println(Integer.toBinaryString(memberArray[0]));
+			System.out.println(Integer.toBinaryString(fanArray[0]));
+			
+			System.out.println("--------------------------");
+			
 			bitShiftedArray(fanArray, fanArrayTemp);
+			for (int i=0; i<INTEGER_BIT_LENGTH; i++) {
+				System.out.println(Integer.toBinaryString(fanArrayTemp[i][0]));
+			}
 			
 			// 결과 계산.
 			calculateResult(memberArray, fanArrayTemp, memberStr.length(), fanStr.length(), intFanLength);
@@ -63,6 +74,12 @@ public class Main {
 		
 		for (int i=0; numFan-i<= numMember; i++) { // 남은 fan의 수가 member보다 작으면 종료.
 			for (int j = 0; j < intFanLength; j++) {
+				int temp = member[j] & fan[shiftCounter][j+indexPointer];
+				System.out.println("member[j]: " + member[j]);
+				System.out.println("fan[shiftCounter][j+indexPointer]: " + fan[shiftCounter][j+indexPointer]);
+				System.out.println("temp: " + temp);
+				System.out.println("(member[j] & fan[shiftCounter][j+indexPointer]): " + (member[j] & fan[shiftCounter][j+indexPointer]));
+				
 				// memeber와 fan 사이에 남남이 만나는 경우가 있으면, bit 연산자 값이 0이 아닌 값이 됨.
 				if ( (member[j] & fan[shiftCounter][j+indexPointer]) != 0) { 
 					isCorrectMatching = false;
@@ -103,6 +120,9 @@ public class Main {
 			for (int j=0; j< MAX_INT_LENGTH; j++) {
 				target[i][j] = target[i-1][j] << 1;
 				
+				System.out.println("A: " + Integer.toBinaryString(target[i-1][j]));
+				System.out.println("B: " + Integer.toBinaryString(target[i][j]));
+				
 				if( (target[i-1][j] & MALE_BIT) == 1) {
 					target[i][j] |= MALE_BIT;
 				}
@@ -127,6 +147,20 @@ public class Main {
 				intBitCounter = 0;
 				arrayCounter++;
 			}
+		}
+		
+		int remainShift = INTEGER_BIT_LENGTH - intBitCounter;
+		while(remainShift-- > 0 && remainShift != 32) {
+			target[arrayCounter] = target[arrayCounter] << 1;
+		}
+	}
+	
+	public static void makeCompareBit(int[] compareBit) {
+		int a = 0x1;
+		
+		for (int i=0; i<compareBit.length; i++) {
+			compareBit[i] = a;
+			a = a << 1;
 		}
 	}
 }
