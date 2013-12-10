@@ -9,9 +9,10 @@ import java.util.Scanner;
 
 public class Main {
 	private static final int MAX_SQUARE = 100;
+	private static final int INTEGER_MAX_BOUND = 10000000;
 	
 	// 이전 블럭의 수와 현재 블록의 수에 따라서 결과가 정해지므로, 결과를 저장하는 cache는 아래와 같이 정의됨.
-	public static long[][] cache = new long[MAX_SQUARE][MAX_SQUARE];  
+	public static double[][] cache = new double[MAX_SQUARE][MAX_SQUARE];  
 
 	
 	/*
@@ -32,7 +33,16 @@ public class Main {
 			// input.txt에서 필요한 parameter 값 읽기.
 			int numSquare = sc.nextInt();
 			
-			System.out.println(findPoly(numSquare, 0));
+			double result = findPoly(numSquare, 0);
+			
+			int intResult = 0;
+			if (result < INTEGER_MAX_BOUND) {
+				intResult = (int) Math.round(result);
+			} else {
+				intResult = (int) Math.round(result / INTEGER_MAX_BOUND);
+			}
+			
+			System.out.println(intResult);
 		}
 		
 		sc.close();
@@ -46,7 +56,7 @@ public class Main {
 	 * 3. 매 처음 시작 일 때는 numPrevBlock이 0 값이 들어온 채로 시작.
 	 *    해당 경우, 경우의 수(casePosibility)는 항상 1임.
 	 */
-	public static long findPoly(int numRemainSquare, int numPrevBlock) {
+	public static double findPoly(int numRemainSquare, int numPrevBlock) {
 		// 예전에 계산되어서 cache에 저장되어 있는 값이 있는지 확인.
 		if (cache[numRemainSquare][numPrevBlock] >= 0) {
 			return cache[numRemainSquare][numPrevBlock];
@@ -60,7 +70,7 @@ public class Main {
 			return cache[numRemainSquare][numPrevBlock] = 1;
 		}
 		
-		int resultSum = 0;
+		double resultSum = 0;
 		// 무조건 한개의 블럭의 놓아야 하므로 1부터 시작함.
 		for(int i = 1; i <= numRemainSquare; i++) {
 			// i개이 블록의 놓기로 정해져 있을 때, 놓을 수 있는 경우의 수.
@@ -80,7 +90,7 @@ public class Main {
 	}
 	
 	
-	public static void initCache(long[][] cache) {
+	public static void initCache(double[][] cache) {
 		for (int i = 0; i < MAX_SQUARE; i++) {
 			for (int j = 0; j < MAX_SQUARE; j++) {
 				cache[i][j] = -1;
