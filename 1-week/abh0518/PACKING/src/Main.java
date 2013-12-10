@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,30 +22,24 @@ public class Main {
 	public boolean[] pack(int backSize){
 		boolean[] selectList = new boolean[luggage.length];
 		Arrays.fill(selectList, false);
-		boolean[] luggageList = new boolean[luggage.length];  
-		Arrays.fill(luggageList, true);
-		return pack(selectList, luggageList, backSize);
+		return pack(selectList, backSize);
 	}
 	
 	public String getKey(boolean[] luggageList, int backSize){
 		return Arrays.toString(luggageList)+backSize;
 	}
 	
-	public boolean[] pack(boolean[] selectList, boolean[] luggageList, int backSize){
-		String key = getKey(luggageList, backSize);
+	public boolean[] pack(boolean[] selectList, int backSize){
+		String key = getKey(selectList, backSize);
 		if(cache.get(key) != null) return cache.get(key);
 		
 		boolean[] result = Arrays.copyOf(selectList, selectList.length);
 		
 		for(int i = 0 ; i < luggage.length ; i++){
-			if( backSize-size[i] >= 0 && luggageList[i] == true){
+			if( backSize-size[i] >= 0 && selectList[i] == false){
 				boolean[] nSelectList = Arrays.copyOf(selectList, selectList.length);
-				boolean[] nLuggageList = Arrays.copyOf(luggageList, luggageList.length);
-				
 				nSelectList[i] = true;
-				nLuggageList[i] = false;
-				
-				nSelectList = pack(nSelectList, nLuggageList, backSize-size[i]);
+				nSelectList = pack(nSelectList, backSize-size[i]);
 				result = getMaxSelect(result, nSelectList);
 			}
 		}
@@ -72,8 +67,8 @@ public class Main {
 	
 	public static void main(String args[]) throws FileNotFoundException{
 		
-		//Scanner in = new Scanner(new File("test.txt"));
-		Scanner in = new Scanner(System.in);
+		Scanner in = new Scanner(new File("test.txt"));
+		//Scanner in = new Scanner(System.in);
 		
 		int testCount = in.nextInt();
 		
@@ -115,3 +110,4 @@ public class Main {
 	}
 
 }
+
