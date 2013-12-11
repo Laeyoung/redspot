@@ -11,30 +11,16 @@ public class Main {
 	private static final int MAX_WELL_DEPTH = 1000+1;
 	private static final int MAX_DAYS = 1000+1;
 	
-	public static long[][] cache = new long[MAX_WELL_DEPTH][MAX_DAYS];
+	public static double[][] cache = new double[MAX_WELL_DEPTH][MAX_DAYS];
 	public static double[] factorialCache = new double[MAX_WELL_DEPTH];
 
 	
 	public static void main(String args[]) throws FileNotFoundException {
-		Scanner sc = new Scanner(new File("input.txt"));
-//		Scanner sc = new Scanner(System.in);
+//		Scanner sc = new Scanner(new File("input.txt"));
+		Scanner sc = new Scanner(System.in);
 		int cases = sc.nextInt();
 		
-//		for (int i=1000; i>0; i--) {
-//			double prob = Math.pow(3d/4d, i) / Math.pow(4d, (1000 - i));
-//			System.out.println(i + ": " + prob);
-//		}
-		
 		initCache(cache);
-		initFactorialCache(factorialCache);
-		
-		
-		for (int i = 1000; i > 501; i--) {
-			double prob = numNRainyDayCase(500, i);;
-			System.out.println(i + ": " + prob);
-		}
-		
-		
 		while (cases-- > 0) {
 			int wellDepth = sc.nextInt(); // 우물 깊이
 			int days = sc.nextInt(); // 장마철 기간
@@ -70,83 +56,33 @@ public class Main {
 		}
 		
 				
-		return numSuccessCase(wellDepth, days);
+		return calculateProb(wellDepth, days);
 	}
 	
-	public static double numSuccessCase(int depth, int days) {
-		double posibleCases = 0d; // 통과 할 때의 경우의 수.
+	public static double calculateProb(int depth, int days) {
+		if (cache[depth][days] != -1) {
+			return cache[depth][days];
+		}
 		
-		
-		// 비가 depth일 만큼 올 때부터, 모든날 비가 오는 경우까지의 경우의 수를 더함.
-		// 경우의 수에 해당 경우가 나올 확률을 곱함.
-		for (int i = depth; i <= days; i++) {
-			/*
-			 * days가 512가 초과할 경우, Math.pow(4, days)가 Double.INFINITY를 초과해서,
-			 * 나중에 allCase로 나눠줘서 계산하지 않고 확률값을 더하는 부분에서 바로바로 계산함.
-			 * 
-			 * Math.pow(3, i) / Math.pow(4, days) => Math.pow(3/4, i) / Math.pow(4, (days-i)
-			 */
-			double probability = Math.pow(3d/4d, i) / Math.pow(4d, (days - i));
+		// 종료 조건 체크.
+		if (depth == 0) { // 탈출 성공!!
+			return 1.0d;
+		} else if (depth > days) { // 탈출 불가, 희망 고문...
+			return 0.0d;
+		}
 			
-			
-			posibleCases += numNRainyDayCase(i, days) * probability;
-			
-			System.out.println("probability : " + probability);
-			System.out.println(">> numNRainyDayCase(i, days) : " + numNRainyDayCase(i, days));
-		}
 		
-		return posibleCases;
+		double caseRainy = 0.75d * calculateProb(depth - 1, days - 1);
+		double caseNotRainy = 0.25d * calculateProb(depth, days - 1);;
+		
+		return cache[depth][days] = (caseRainy + caseNotRainy);
 	}
 	
-	
-	/**
-	 * 해당 days 기간동안 N-rainyDay 일 경우의 수를 반환함. (day Combination rainyDay)
-	 */
-	public static double numNRainyDayCase(int rainyDay, int days) {
-		double a = 1.0d;
-		for (int i = days; i > rainyDay; i--) {
-			a *= i;
-		}
-		
-		double b = factorial (days-rainyDay);
-		
-		return a / b;
-	}
-	
-	
-	/**
-	 * integer 범위가 넘어갈 수 있으므로, double 타입으로 return.
-	 */
-	public static double factorial(int n) {
-		if (n < 0) {
-			throw new IllegalArgumentException("n must be >= 0");
-		}
-		
-		// cache에 있는지 확인.
-		if (factorialCache[n] != -1) {
-			return factorialCache[n];
-		}
-		
-		double factorial = 1;
-		for (int i = 2; i <= n; i++) {
-			factorial *= i;
-		}
-		
-		return factorialCache[n] = factorial;
-	}
-	
-	
-	public static void initCache(long[][] cache) {
+	public static void initCache(double[][] cache) {
 		for (int i = 0; i < MAX_WELL_DEPTH; i++) {
 			for (int j = 0; j < MAX_DAYS; j++) {
 				cache[i][j] = -1;
 			}
-		}
-	}
-	
-	public static void initFactorialCache(double[] cache) {
-		for (int i = 0; i < MAX_WELL_DEPTH; i++) {
-			cache[i] = -1;
 		}
 	}
 }
