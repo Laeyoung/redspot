@@ -1,8 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
@@ -11,7 +10,7 @@ public class Main {
 	private String[] luggage;
 	private int size[];
 	private int need[];
-	private Map<String, boolean[]> cache = new HashMap<String, boolean[]>();
+	private Integer cache[][];
 	
 	public Main(String[] luggage, int size[], int need[]){
 		this.luggage = luggage;
@@ -20,55 +19,80 @@ public class Main {
 	}
 	
 	public boolean[] pack(int backSize){
-		boolean[] selectList = new boolean[luggage.length];
-		Arrays.fill(selectList, false);
-		return pack(selectList, backSize);
+		cache = new Integer[luggage.length][backSize+1];
+		boolean[] result = new boolean[luggage.length];
+		Arrays.fill(result, false);
+		track(0,backSize,result);
+		return result;
 	}
+    
 	
-	public String getKey(boolean[] luggageList, int backSize){
-		return Arrays.toString(luggageList)+backSize;
-	}
-	
-	public boolean[] pack(boolean[] selectList, int backSize){
-		String key = getKey(selectList, backSize);
-		if(cache.get(key) != null) return cache.get(key);
+	private void track(int index, int remainSize, boolean[] selectList){
+		if(index == luggage.length) return;
 		
-		boolean[] result = Arrays.copyOf(selectList, selectList.length);
-		
-		for(int i = 0 ; i < luggage.length ; i++){
-			if( backSize-size[i] >= 0 && selectList[i] == false){
-				boolean[] nSelectList = Arrays.copyOf(selectList, selectList.length);
-				nSelectList[i] = true;
-				nSelectList = pack(nSelectList, backSize-size[i]);
-				result = getMaxSelect(result, nSelectList);
+		int nonSelectResult = pack(index+1, remainSize);
+		if(remainSize - size[index] >= 0 ){
+			int selectResult = need[index] + pack(index+1, remainSize-size[index]);
+			if(selectResult > nonSelectResult){
+				selectList[index] = true;
+				remainSize -= size[index];
 			}
 		}
 		
-		cache.put(key, result);
+		track(index+1, remainSize, selectList);
+	}
+	
+	private int pack(int index, int remainSize){
+		if(index == luggage.length) return 0;
+		if(cache[index][remainSize] != null) return cache[index][remainSize];
+		
+		//index를 선택하지 않은 경우
+		int result = pack(index+1, remainSize);
+		
+		//index를 선택한 경우
+		if ( remainSize - size[index] >= 0 ){
+			result = Math.max(result, need[index] + pack(index+1, remainSize-size[index]));
+		}
+		
+		cache[index][remainSize] = result;
 		return result;
 	}
-	
-	private boolean[] getMaxSelect(boolean[] aSelect, boolean[] bSelect){
-		
-		int sumA = 0;
-		for(int i = 0 ; i < aSelect.length ; i++){
-			if(aSelect[i] == true) sumA += need[i];
-		}
-		
-		int sumB = 0;
-		for(int i = 0 ; i < bSelect.length ; i++){
-			if(bSelect[i] == true) sumB += need[i];
-		}
-		
-		return sumA > sumB ? aSelect : bSelect; 
+    
+	public static void testHard() throws FileNotFoundException{
+        Date start = new Date();
+        Scanner in = new Scanner(new File("test_hard.txt"));
+        
+        int luggageCount = in.nextInt();
+        int backSize = in.nextInt();
+        
+        String[] luggageName = new String[luggageCount];
+        int[] size = new int[luggageCount];
+        int[] need = new int[luggageCount];
+        in.nextLine();
+        for(int j = 0 ; j < luggageCount ; j++){
+            String str = in.nextLine();
+            StringTokenizer tk = new StringTokenizer(str," ");
+            luggageName[j] = tk.nextToken();
+            size[j] = Integer.parseInt(tk.nextToken());
+            need[j] = Integer.parseInt(tk.nextToken());
+            
+        }
+        
+        for(int i = 0 ; i < 100 ; i++){
+            Main main = new Main(luggageName,size,need);
+            //				boolean selectList[] = main.pack(backSize);
+			
+            
+        }
+        Date end = new Date();
+        System.out.println(end.getTime()-start.getTime());
 	}
-	
-	
 	
 	public static void main(String args[]) throws FileNotFoundException{
 		
-		Scanner in = new Scanner(new File("test.txt"));
-		//Scanner in = new Scanner(System.in);
+		//testHard();
+		//Scanner in = new Scanner(new File("test.txt"));
+		Scanner in = new Scanner(System.in);
 		
 		int testCount = in.nextInt();
 		
@@ -90,6 +114,7 @@ public class Main {
 			}
 			
 			Main main = new Main(luggageName,size,need);
+            
 			boolean selectList[] = main.pack(backSize);
 			
 			int needSum = 0;
@@ -105,9 +130,8 @@ public class Main {
 			for(int j = 0 ; j < selectList.length ; j++){
 				if(selectList[j] == true) System.out.println(luggageName[j]);
 			}
-	
+            
 		}		
 	}
-
+    
 }
-
